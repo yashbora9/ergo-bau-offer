@@ -82,27 +82,27 @@ function roundedShape(w, h, r) {
 
 function coverUVs(geo, w, h, tex) {
   const img = tex.image;
-  if (!img?.width) return;
-  const aspect = img.width / img.height;
-  const frame = w / h;
-  let u0 = 0;
-  let v0 = 0;
-  let u1 = 1;
-  let v1 = 1;
-  if (aspect > frame) {
-    const u = frame / aspect;
-    u0 = (1 - u) / 2;
-    u1 = 1 - u0;
+  const tw = img?.width || 1;
+  const th = img?.height || 1;
+  const texAspect = tw / th;
+  const planeAspect = w / h;
+  let sx = 1;
+  let sy = 1;
+  let ox = 0;
+  let oy = 0;
+  if (texAspect > planeAspect) {
+    sx = planeAspect / texAspect;
+    ox = (1 - sx) / 2;
   } else {
-    const v = aspect / frame;
-    v0 = (1 - v) / 2;
-    v1 = 1 - v0;
+    sy = texAspect / planeAspect;
+    oy = (1 - sy) / 2;
   }
-  const uv = geo.attributes.uv;
-  for (let i = 0; i < uv.count; i++) {
-    const u = uv.getX(i);
-    const v = uv.getY(i);
-    uv.setXY(i, u0 + u * (u1 - u0), v0 + v * (v1 - v0));
+  const pos = geo.getAttribute('position');
+  const uv = geo.getAttribute('uv');
+  for (let i = 0; i < pos.count; i++) {
+    const u = (pos.getX(i) + w / 2) / w;
+    const v = (pos.getY(i) + h / 2) / h;
+    uv.setXY(i, ox + u * sx, oy + v * sy);
   }
   uv.needsUpdate = true;
 }
@@ -175,12 +175,10 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-function makeCard({ label, sub = '', kicker = '' }) {
-  /* Large Abadin-style portrait tile — dark premium */
-  const w = 3.15;
-  const h = 4.05;
+function makeCard({ label, sub = '', kicker = '', w = 3.15, h = 3.95 }) {
+  /* Portrait tile — pass smaller w/h for dual-card slides */
   const W = 1024;
-  const H = 1328;
+  const H = 1280;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -188,51 +186,54 @@ function makeCard({ label, sub = '', kicker = '' }) {
   ctx.fillStyle = '#141018';
   ctx.fillRect(0, 0, W, H);
   const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, 'rgba(122,32,66,0.28)');
-  g.addColorStop(0.45, 'rgba(20,16,24,0.2)');
-  g.addColorStop(1, 'rgba(122,32,66,0.12)');
+  g.addColorStop(0, 'rgba(122,32,66,0.38)');
+  g.addColorStop(0.4, 'rgba(20,16,24,0.15)');
+  g.addColorStop(1, 'rgba(122,32,66,0.18)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = 'rgba(122,32,66,0.72)';
-  ctx.lineWidth = 7;
+  ctx.strokeStyle = 'rgba(122,32,66,0.85)';
+  ctx.lineWidth = 10;
   ctx.strokeRect(40, 40, W - 80, H - 80);
+  // Accent bar
+  ctx.fillStyle = '#7A2042';
+  ctx.fillRect(40, 40, 16, H - 80);
 
-  const pad = 96;
-  let y = 150;
+  const pad = 110;
+  let y = 220;
   ctx.textBaseline = 'top';
 
   if (kicker) {
-    ctx.fillStyle = 'rgba(244,228,212,0.72)';
-    ctx.font = '700 34px Manrope, system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(244,228,212,0.78)';
+    ctx.font = '700 42px Manrope, system-ui, sans-serif';
     ctx.fillText(String(kicker).toUpperCase(), pad, y);
-    y += 78;
+    y += 100;
   }
 
   ctx.fillStyle = '#F4E4D4';
-  const labelSize = String(label).length > 14 ? 72 : String(label).length > 10 ? 88 : 108;
+  const labelSize = String(label).length > 16 ? 78 : String(label).length > 11 ? 92 : 108;
   ctx.font = `700 ${labelSize}px Syne, sans-serif`;
-  const labelLines = wrapText(ctx, String(label), W - pad * 2);
+  const labelLines = wrapText(ctx, String(label), W - pad * 2 - 20);
   labelLines.slice(0, 4).forEach((line) => {
     ctx.fillText(line, pad, y);
-    y += labelSize + 14;
+    y += labelSize + 18;
   });
 
-  y += 28;
-  ctx.strokeStyle = 'rgba(122,32,66,0.55)';
-  ctx.lineWidth = 3;
+  y += 40;
+  ctx.strokeStyle = 'rgba(122,32,66,0.7)';
+  ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(pad, y);
-  ctx.lineTo(pad + 180, y);
+  ctx.lineTo(pad + 240, y);
   ctx.stroke();
-  y += 48;
+  y += 60;
 
   if (sub) {
-    ctx.fillStyle = 'rgba(244,228,212,0.7)';
-    ctx.font = '500 44px Manrope, system-ui, sans-serif';
-    const subLines = wrapText(ctx, sub, W - pad * 2);
-    subLines.slice(0, 8).forEach((line) => {
+    ctx.fillStyle = 'rgba(244,228,212,0.78)';
+    ctx.font = '500 48px Manrope, system-ui, sans-serif';
+    const subLines = wrapText(ctx, sub, W - pad * 2 - 20);
+    subLines.slice(0, 10).forEach((line) => {
       ctx.fillText(line, pad, y);
-      y += 58;
+      y += 62;
     });
   }
 
@@ -908,7 +909,7 @@ export function createWorld(canvas) {
   function layoutGroups(w) {
     mobile = w < 720;
     useBloom = !mobile && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const s = mobile ? 0.58 : w < 1100 ? 0.98 : 1.18;
+    const s = mobile ? 0.62 : w < 1100 ? 0.95 : 1.05;
     slideGroups.forEach((g) => {
       g.scale.setScalar(s);
       g.position.set(0, mobile ? 0.95 : 0, 0);
@@ -919,7 +920,7 @@ export function createWorld(canvas) {
 
   function resize(w, h) {
     camera.aspect = w / h;
-    camera.fov = w < 720 ? 46 : 38;
+    camera.fov = w < 720 ? 42 : 34;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
     layoutGroups(w);
