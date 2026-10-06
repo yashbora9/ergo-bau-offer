@@ -3,7 +3,7 @@
 Dark-premium interactive offer deck for a mid-size German construction firm (~200 employees).  
 Craft inspired by the Abadin ERGO deck (Vite + Three.js + GSAP camera fly-throughs); content and theme are new.
 
-**Live (once GitHub Pages is enabled):** https://yashbora9.github.io/ergo-bau-offer/
+**Live:** https://yashbora9.github.io/ergo-bau-offer/
 
 ## Stack
 
