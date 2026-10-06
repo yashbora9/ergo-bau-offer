@@ -885,19 +885,16 @@ export function createWorld(canvas) {
 
   function onClick() {
     if (focusBusy) return;
+    // Tile/photo click-to-enlarge disabled — only map hotspots stay interactive
+    if (focused) {
+      closeFocus();
+      return;
+    }
     const hot = pickHotspot();
     if (hot && typeof hotspotPick === 'function') {
       hotspotPick(hot.userData.hotspotId, hot.userData.label);
       gsap.fromTo(hot.scale, { x: 1.35, y: 1.35, z: 1.35 }, { x: 1, y: 1, z: 1, duration: 0.45, ease: 'power2.out' });
-      return;
     }
-    const mesh = pickFrom(slideGroups[current]);
-    if (focused) {
-      if (!mesh || mesh === focused) closeFocus();
-      else openFocus(mesh);
-      return;
-    }
-    if (mesh) openFocus(mesh);
   }
 
   function setPointer(x, y) {
@@ -909,7 +906,7 @@ export function createWorld(canvas) {
   function layoutGroups(w) {
     mobile = w < 720;
     useBloom = !mobile && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const s = mobile ? 0.62 : w < 1100 ? 0.95 : 1.05;
+    const s = mobile ? 0.48 : w < 1100 ? 0.88 : 1;
     slideGroups.forEach((g) => {
       g.scale.setScalar(s);
       g.position.set(0, mobile ? 0.95 : 0, 0);
@@ -920,7 +917,7 @@ export function createWorld(canvas) {
 
   function resize(w, h) {
     camera.aspect = w / h;
-    camera.fov = w < 720 ? 42 : 34;
+    camera.fov = w < 720 ? 46 : 38;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
     layoutGroups(w);
@@ -986,10 +983,10 @@ export function createWorld(canvas) {
 
     const g = slideGroups[current];
     const next = pickFrom(g);
+    // Hover enlarge disabled with click-to-focus
     if (!focused && hover !== next) {
-      if (hover) gsap.to(hover.scale, { x: 1, y: 1, z: 1, duration: 0.4, ease: 'power2.out' });
+      if (hover) gsap.killTweensOf(hover.scale);
       hover = next;
-      if (hover) gsap.to(hover.scale, { x: 1.06, y: 1.06, z: 1, duration: 0.4, ease: 'power2.out' });
     }
 
     if (g) {
