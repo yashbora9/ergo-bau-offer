@@ -176,32 +176,70 @@ function wrapText(ctx, text, maxWidth) {
 }
 
 function makeCard({ label, sub = '', kicker = '' }) {
+  /* Large Abadin-style portrait tile — dark premium */
+  const w = 3.15;
+  const h = 4.05;
   const W = 1024;
-  const H = 640;
+  const H = 1328;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#141018';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = 'rgba(122,32,66,0.55)';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(18, 18, W - 36, H - 36);
-  ctx.fillStyle = '#7A2042';
-  ctx.font = '600 28px Manrope, sans-serif';
-  ctx.fillText((kicker || '').toUpperCase(), 72, 110);
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(122,32,66,0.28)');
+  g.addColorStop(0.45, 'rgba(20,16,24,0.2)');
+  g.addColorStop(1, 'rgba(122,32,66,0.12)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(122,32,66,0.72)';
+  ctx.lineWidth = 7;
+  ctx.strokeRect(40, 40, W - 80, H - 80);
+
+  const pad = 96;
+  let y = 150;
+  ctx.textBaseline = 'top';
+
+  if (kicker) {
+    ctx.fillStyle = 'rgba(244,228,212,0.72)';
+    ctx.font = '700 34px Manrope, system-ui, sans-serif';
+    ctx.fillText(String(kicker).toUpperCase(), pad, y);
+    y += 78;
+  }
+
   ctx.fillStyle = '#F4E4D4';
-  ctx.font = '700 64px Syne, sans-serif';
-  const titleLines = wrapText(ctx, label, W - 140);
-  titleLines.slice(0, 3).forEach((ln, i) => ctx.fillText(ln, 72, 200 + i * 72));
-  ctx.fillStyle = 'rgba(244,228,212,0.62)';
-  ctx.font = '400 30px Manrope, sans-serif';
-  const subLines = wrapText(ctx, sub, W - 140);
-  subLines.slice(0, 5).forEach((ln, i) => ctx.fillText(ln, 72, 420 + i * 40));
+  const labelSize = String(label).length > 14 ? 72 : String(label).length > 10 ? 88 : 108;
+  ctx.font = `700 ${labelSize}px Syne, sans-serif`;
+  const labelLines = wrapText(ctx, String(label), W - pad * 2);
+  labelLines.slice(0, 4).forEach((line) => {
+    ctx.fillText(line, pad, y);
+    y += labelSize + 14;
+  });
+
+  y += 28;
+  ctx.strokeStyle = 'rgba(122,32,66,0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(pad, y);
+  ctx.lineTo(pad + 180, y);
+  ctx.stroke();
+  y += 48;
+
+  if (sub) {
+    ctx.fillStyle = 'rgba(244,228,212,0.7)';
+    ctx.font = '500 44px Manrope, system-ui, sans-serif';
+    const subLines = wrapText(ctx, sub, W - pad * 2);
+    subLines.slice(0, 8).forEach((line) => {
+      ctx.fillText(line, pad, y);
+      y += 58;
+    });
+  }
+
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  const mesh = makePhotoMesh(tex, 2.55, 1.6);
+  const mesh = makePhotoMesh(tex, w, h);
   mesh.userData.isCard = true;
   return mesh;
 }
@@ -808,7 +846,7 @@ export function createWorld(canvas) {
     const heroX = mobile ? 0.1 : 0.85;
     const heroY = mobile ? 1.0 : 0.28;
     const heroZ = rest.z + (mobile ? 0.55 : 0.9);
-    const heroScale = mobile ? 1.4 : 1.6;
+    const heroScale = mobile ? 1.75 : 2.15;
     const dur = reduced ? 0.01 : 0.4;
     const tl = gsap.timeline({ onComplete: () => { focusBusy = false; } });
     tl.to(mesh.rotation, { y: rest.ry + Math.PI * 0.5, duration: dur, ease: 'power2.in' }, 0);
@@ -870,12 +908,12 @@ export function createWorld(canvas) {
   function layoutGroups(w) {
     mobile = w < 720;
     useBloom = !mobile && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const s = mobile ? 0.4 : w < 1100 ? 0.82 : 1;
+    const s = mobile ? 0.58 : w < 1100 ? 0.98 : 1.18;
     slideGroups.forEach((g) => {
       g.scale.setScalar(s);
-      g.position.set(0, mobile ? 1.2 : 0, 0);
+      g.position.set(0, mobile ? 0.95 : 0, 0);
     });
-    site.root.scale.setScalar(mobile ? 0.55 : 1);
+    site.root.scale.setScalar(mobile ? 0.68 : 1);
     site.root.position.set(mobile ? 0 : 0.2, mobile ? 0.4 : 0, mobile ? -0.2 : -0.5);
   }
 
